@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Login - Mixocart</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            max-width: 450px;
+            width: 100%;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        .loader {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .loader.show {
+            display: block;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .test-buttons {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+        .test-btn {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .test-btn:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔐 Test Mixocart API</h2>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="email" value="test@example.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="password" value="password123" required>
+            </div>
+            
+            <button type="submit" id="loginBtn">Login</button>
+        </form>
+        
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+        </div>
+        
+        <div id="result" class="result"></div>
+
+        <div class="test-buttons" id="testButtons" style="display: none;">
+            <h3 style="margin-bottom: 15px; color: #333;">Test Other APIs:</h3>
+            <button class="test-btn" onclick="testGetUser()">📋 Get Current User</button>
+            <button class="test-btn" onclick="testGetRoles()">👥 Get All Roles</button>
+            <button class="test-btn" onclick="testGetPermissions()">🔑 Get All Permissions</button>
+            <button class="test-btn" onclick="testLogout()">🚪 Logout</button>
+        </div>
+    </div>
+
+    <script src="assets/js/api.js"></script>
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const loader = document.getElementById('loader');
+        const resultDiv = document.getElementById('result');
+        const testButtons = document.getElementById('testButtons');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            // Show loader
+            loginBtn.disabled = true;
+            loader.classList.add('show');
+            resultDiv.classList.remove('show');
+            
+            try {
+                const response = await API.Auth.login({ email, password });
+                
+                if (response.success) {
+                    API.setToken(response.token);
+                    
+                    resultDiv.className = 'result success show';
+                    resultDiv.innerHTML = `
+                        <strong>✅ Login Successful!</strong><br><br>
+                        <strong>User:</strong> ${response.user.name}<br>
+                        <strong>Email:</strong> ${response.user.email}<br>
+                        <strong>Token:</strong> ${response.token.substring(0, 30)}...<br><br>
+                        <small>Token saved to localStorage!</small>
+                    `;
+                    
+                    // Show test buttons
+                    testButtons.style.display = 'block';
+                }
+            } catch (error) {
+                resultDiv.className = 'result error show';
+                resultDiv.innerHTML = `<strong>❌ Error:</strong> ${error.message}`;
+            } finally {
+                loginBtn.disabled = false;
+                loader.classList.remove('show');
+            }
+        });
+
+        async function testGetUser() {
+            try {
+                loader.classList.add('show');
+                const response = await API.Auth.getUser();
+                
+                resultDiv.className = 'result success show';
+                resultDiv.innerHTML = `
+                    <strong>✅ User Data Retrieved!</strong><br><br>
+                    <pre>${JSON.stringify(response.user, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error show';
+                resultDiv.innerHTML = `<strong>❌ Error:</strong> ${error.message}`;
+            } finally {
+                loader.classList.remove('show');
+            }
+        }
+
+        async function testGetRoles() {
+            try {
+                loader.classList.add('show');
+                const response = await API.Roles.getAll();
+                
+                resultDiv.className = 'result success show';
+                resultDiv.innerHTML = `
+                    <strong>✅ Roles Retrieved!</strong><br><br>
+                    <strong>Total Roles:</strong> ${response.data.length}<br><br>
+                    <pre>${JSON.stringify(response.data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error show';
+                resultDiv.innerHTML = `<strong>❌ Error:</strong> ${error.message}`;
+            } finally {
+                loader.classList.remove('show');
+            }
+        }
+
+        async function testGetPermissions() {
+            try {
+                loader.classList.add('show');
+                const response = await API.Roles.getPermissions();
+                
+                const permCount = Object.keys(response.data).reduce((acc, key) => 
+                    acc + Object.keys(response.data[key]).length, 0
+                );
+                
+                resultDiv.className = 'result success show';
+                resultDiv.innerHTML = `
+                    <strong>✅ Permissions Retrieved!</strong><br><br>
+                    <strong>Total Categories:</strong> ${Object.keys(response.data).length}<br>
+                    <strong>Total Permissions:</strong> ${permCount}<br><br>
+                    <strong>Categories:</strong> ${Object.keys(response.data).join(', ')}
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error show';
+                resultDiv.innerHTML = `<strong>❌ Error:</strong> ${error.message}`;
+            } finally {
+                loader.classList.remove('show');
+            }
+        }
+
+        async function testLogout() {
+            try {
+                loader.classList.add('show');
+                await API.Auth.logout();
+                API.removeToken();
+                
+                resultDiv.className = 'result success show';
+                resultDiv.innerHTML = `<strong>✅ Logged out successfully!</strong><br>Token removed.`;
+                
+                testButtons.style.display = 'none';
+                loginBtn.disabled = false;
+            } catch (error) {
+                resultDiv.className = 'result error show';
+                resultDiv.innerHTML = `<strong>❌ Error:</strong> ${error.message}`;
+            } finally {
+                loader.classList.remove('show');
+            }
+        }
+    </script>
+</body>
+</html>
